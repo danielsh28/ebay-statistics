@@ -25,6 +25,7 @@ public class MockStaticsDataAccessService  implements AccountManagerStatisticsDa
      private String NEW = "NEW" ;
 
     MockStaticsDataAccessService(){
+        dataMap = new HashMap<>();
         try {
             JSONParser parser = new JSONParser();
             JSONObject newConditionDocs = (JSONObject) parser.parse(new FileReader(new File("").
@@ -33,10 +34,8 @@ public class MockStaticsDataAccessService  implements AccountManagerStatisticsDa
                     getAbsolutePath() +  "/src/DocsConditionUsed.json"));
             ArrayList<Pair<String,JSONObject>> newList = buildAccountFlattenList(newConditionDocs);
             ArrayList<Pair<String,JSONObject>> usedList = buildAccountFlattenList(usedConditionDocs);
-            BuildDBMap(newList,USED);
-            BuildDBMap(usedList,NEW);
-
-
+            BuildDBMap(newList,NEW);
+            BuildDBMap(usedList,USED);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -44,7 +43,7 @@ public class MockStaticsDataAccessService  implements AccountManagerStatisticsDa
     }
 
     void BuildDBMap(ArrayList<Pair<String,JSONObject>> list,String condition ){
-        dataMap = new HashMap<>();
+
         //key will be name of the account manager underscore condition
 
         for(Pair<String,JSONObject> p : list ){
@@ -54,12 +53,13 @@ public class MockStaticsDataAccessService  implements AccountManagerStatisticsDa
 
             if(totalActiveSellers > 3 || totalActiveQuantity > 5) {
             String name = p.getKey();
+            String nameKey = condition + '_' + name;
             JSONObject contextData = (JSONObject) productData.get("contextData");
 
-            if(dataMap.get(p.getKey()) == null){
-                dataMap.put(condition + '_' + name ,new AccountManagerStatistics(name));
+            if(dataMap.get(nameKey) == null){
+                dataMap.put(nameKey ,new AccountManagerStatistics(name));
             }
-            dataMap.get(condition + '_' + name).addConditionSummary((Long)productData.get("epid"),(Boolean)contextData.get("contextAsSite"),(Boolean)contextData.get("contextAsSeller"));
+            dataMap.get(nameKey).addConditionSummary((Long)productData.get("epid"),(Boolean)contextData.get("contextAsSite"),(Boolean)contextData.get("contextAsSeller"));
 
         }
 
