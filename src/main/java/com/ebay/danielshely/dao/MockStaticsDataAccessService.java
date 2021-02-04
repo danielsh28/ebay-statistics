@@ -53,13 +53,12 @@ public class MockStaticsDataAccessService  implements AccountManagerStatisticsDa
 
             if(totalActiveSellers > 3 || totalActiveQuantity > 5) {
             String name = p.getKey();
-            String nameKey = condition + '_' + name;
             JSONObject contextData = (JSONObject) productData.get("contextData");
 
-            if(dataMap.get(nameKey) == null){
-                dataMap.put(nameKey ,new AccountManagerStatistics(name));
+            if(dataMap.get(name) == null){
+                dataMap.put(name ,new AccountManagerStatistics(name));
             }
-            dataMap.get(nameKey).addConditionSummary((Long)productData.get("epid"),(Boolean)contextData.get("contextAsSite"),(Boolean)contextData.get("contextAsSeller"));
+            dataMap.get(name).addConditionSummary(condition,(Long)productData.get("epid"),(Boolean)contextData.get("contextAsSite"),(Boolean)contextData.get("contextAsSeller"));
 
         }
 
@@ -69,7 +68,7 @@ public class MockStaticsDataAccessService  implements AccountManagerStatisticsDa
         JSONObject prod =  (JSONObject) json.get("product");
         JSONArray accounts = (JSONArray) json.get("items");
         return (ArrayList<Pair>)accounts.stream().map(account -> new Pair<>(((JSONObject)account).
-                get("accountManager"),prod)).collect(Collectors.toList());
+                get("accountManager") == null ? "unknown" : ((JSONObject)account).get("accountManager") ,prod)).collect(Collectors.toList());
     }
 
     ArrayList<Pair<String,JSONObject>> buildAccountFlattenList(JSONObject docs){
@@ -88,15 +87,17 @@ public class MockStaticsDataAccessService  implements AccountManagerStatisticsDa
     @Override
     public JSONArray getAccountStatistics(String name) {
 
-      JSONArray accountAtatistics = new JSONArray();
-        JSONObject newConditionStatistics =  new JSONObject();
+     JSONArray accountStatistics = new JSONArray();
+     accountStatistics.add(dataMap.get(name));
+        /*JSONObject newConditionStatistics =  new JSONObject();
         JSONObject usedConditionStatistics =  new JSONObject();
-        newConditionStatistics.put(NEW + "_" + name,dataMap.get(NEW + "_" + name));
+        newConditionStatistics.put(name,dataMap.get(NEW + "_" + name));
         usedConditionStatistics.put(USED + "_" + name,dataMap.get(USED + "_" + name));
-      accountAtatistics.add(newConditionStatistics);
-      accountAtatistics.add(usedConditionStatistics);
+      accountStatistics.add(newConditionStatistics);
+      accountStatistics.add(usedConditionStatistics);
 
-        return accountAtatistics ;
+*/
+        return accountStatistics ;
     }
 }
 
