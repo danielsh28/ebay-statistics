@@ -19,10 +19,13 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"unchecked", "rawtypes"})
 @Repository("mockData")
 public class MockStaticsDataAccessService implements AccountManagerStatisticsDao {
-    private Map<String, AccountManagerStatistics> dataMap;
-    private String USED = "USED";
-    private String NEW = "NEW";
+    private final Map<String, AccountManagerStatistics> dataMap;
+    private final String USED = "USED";
+    private final String NEW = "NEW";
 
+    /**
+     * Constructor fetch the data from json files and and build db map from a flattened transformed lists
+     */
     public MockStaticsDataAccessService() {
         dataMap = new HashMap<>();
         try {
