@@ -16,88 +16,99 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
-
-@SuppressWarnings({"unchecked","rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 @Repository("mockData")
-public class MockStaticsDataAccessService  implements AccountManagerStatisticsDao{
+public class MockStaticsDataAccessService implements AccountManagerStatisticsDao {
     private Map<String, AccountManagerStatistics> dataMap;
-     private String USED = "USED" ;
-     private String NEW = "NEW" ;
+    private String USED = "USED";
+    private String NEW = "NEW";
 
-    MockStaticsDataAccessService(){
+    public MockStaticsDataAccessService() {
         dataMap = new HashMap<>();
         try {
             JSONParser parser = new JSONParser();
             JSONObject newConditionDocs = (JSONObject) parser.parse(new FileReader(new File("").
                     getAbsolutePath() + "/src/DocsConditionNew.json"));
             JSONObject usedConditionDocs = (JSONObject) parser.parse(new FileReader(new File("").
-                    getAbsolutePath() +  "/src/DocsConditionUsed.json"));
-            ArrayList<Pair<String,JSONObject>> newList = buildAccountFlattenList(newConditionDocs);
-            ArrayList<Pair<String,JSONObject>> usedList = buildAccountFlattenList(usedConditionDocs);
-            BuildDBMap(newList,NEW);
-            BuildDBMap(usedList,USED);
+                    getAbsolutePath() + "/src/DocsConditionUsed.json"));
+            ArrayList<Pair<String, JSONObject>> newList = buildAccountFlattenList(newConditionDocs);
+            ArrayList<Pair<String, JSONObject>> usedList = buildAccountFlattenList(usedConditionDocs);
+            BuildDBMap(newList, NEW);
+            BuildDBMap(usedList, USED);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    void BuildDBMap(ArrayList<Pair<String,JSONObject>> list,String condition ){
-
-        //key will be name of the account manager underscore condition
-
-        for(Pair<String,JSONObject> p : list ){
+    /**
+     * method thakes list of account manager and product and build the db map for it
+     *
+     * @param list      - the alist of pairs
+     * @param condition the  product condition
+     */
+    void BuildDBMap(ArrayList<Pair<String, JSONObject>> list, String condition) {
+        for (Pair<String, JSONObject> p : list) {
             JSONObject productData = p.getValue();
-            long totalActiveSellers = (Long)productData.get("totalActiveSellers");
-            long totalActiveQuantity = (Long)productData.get("totalActiveQuantity");
+            long totalActiveSellers = (Long) productData.get("totalActiveSellers");
+            long totalActiveQuantity = (Long) productData.get("totalActiveQuantity");
 
-            if(totalActiveSellers > 3 || totalActiveQuantity > 5) {
-            String name = p.getKey();
-            JSONObject contextData = (JSONObject) productData.get("contextData");
+            if (totalActiveSellers > 3 || totalActiveQuantity > 5) {
+                String name = p.getKey();
+                JSONObject contextData = (JSONObject) productData.get("contextData");
 
-            if(dataMap.get(name) == null){
-                dataMap.put(name ,new AccountManagerStatistics(name));
+                if (dataMap.get(name) == null) {
+                    dataMap.put(name, new AccountManagerStatistics(name));
+                }
+                dataMap.get(name).addConditionSummary(condition, (Long) productData.get("epid"),
+                        (Boolean) contextData.get("contextAsSite"), (Boolean) contextData.get("contextAsSeller"));
+
             }
-            dataMap.get(name).addConditionSummary(condition,(Long)productData.get("epid"),(Boolean)contextData.get("contextAsSite"),(Boolean)contextData.get("contextAsSeller"));
-
-        }
 
         }
     }
-    ArrayList<Pair> buildProdAccountArray(JSONObject json){
-        JSONObject prod =  (JSONObject) json.get("product");
+
+    /**
+     * build an unwind list of pairs for a specific product from a specific condition file.
+     *
+     * @param json
+     * @return
+     */
+    private ArrayList<Pair> buildProdAccountArray(JSONObject json) {
+        JSONObject prod = (JSONObject) json.get("product");
         JSONArray accounts = (JSONArray) json.get("items");
-        return (ArrayList<Pair>)accounts.stream().map(account -> new Pair<>(((JSONObject)account).
-                get("accountManager") == null ? "unknown" : ((JSONObject)account).get("accountManager") ,prod)).collect(Collectors.toList());
+        return (ArrayList<Pair>) accounts.stream().map(account -> new Pair<>(((JSONObject) account).
+                get("accountManager") == null ? "unknown" :
+                ((JSONObject) account).get("accountManager"), prod)).collect(Collectors.toList());
     }
 
-    ArrayList<Pair<String,JSONObject>> buildAccountFlattenList(JSONObject docs){
+    /**
+     * method build an unwind pairs array- creating list of product and account managers pairs.
+     *
+     * @param docs the raw dta jsonObject
+     * @return
+     */
+    private ArrayList<Pair<String, JSONObject>> buildAccountFlattenList(JSONObject docs) {
         JSONArray docsList = ((JSONArray) (docs.get("docList")));
-        ArrayList<ArrayList<Pair<String,JSONObject>>> list = (ArrayList) docsList.stream().
+
+        // first mapping the list to a list of lists of pairs - each list representing product.
+        ArrayList<ArrayList<Pair<String, JSONObject>>> list = (ArrayList) docsList.stream().
                 map(e -> buildProdAccountArray((JSONObject) e)).collect(Collectors.toList());
-        return  (ArrayList) list.stream().flatMap(e-> ((List)e).stream()).collect(Collectors.toList());
-    }
 
-
-    @Override
-    public Map<String, AccountManagerStatistics> getAllAccountManagerStatistics() {
-        return dataMap;
+        //returning the flattened version of the list
+        return (ArrayList) list.stream().flatMap(e -> ((List) e).stream()).collect(Collectors.toList());
     }
 
     @Override
     public JSONArray getAccountStatistics(String name) {
-
-     JSONArray accountStatistics = new JSONArray();
-     accountStatistics.add(dataMap.get(name));
-        /*JSONObject newConditionStatistics =  new JSONObject();
-        JSONObject usedConditionStatistics =  new JSONObject();
-        newConditionStatistics.put(name,dataMap.get(NEW + "_" + name));
-        usedConditionStatistics.put(USED + "_" + name,dataMap.get(USED + "_" + name));
-      accountStatistics.add(newConditionStatistics);
-      accountStatistics.add(usedConditionStatistics);
-
-*/
-        return accountStatistics ;
+        JSONArray accountStatistics = new JSONArray();
+        AccountManagerStatistics accountManagerStatistics = dataMap.get(name);
+        if (accountManagerStatistics == null) {
+            accountStatistics.add("Account manager name not exist!!");
+        } else {
+            accountStatistics.add(accountManagerStatistics);
+        }
+        return accountStatistics;
     }
 }
 

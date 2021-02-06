@@ -1,25 +1,21 @@
 package com.ebay.danielshely.service;
 
 import com.ebay.danielshely.dao.AccountManagerStatisticsDao;
-import com.ebay.danielshely.model.AccountManagerStatistics;
 import org.json.simple.JSONArray;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
+@Service
 public class AccountStatisticsService {
+    private final AccountManagerStatisticsDao accountManagerStatisticsDao;
+
 
     public AccountStatisticsService(@Qualifier("mockData") AccountManagerStatisticsDao accountManagerStatisticsDao) {
         this.accountManagerStatisticsDao = accountManagerStatisticsDao;
     }
 
-    private AccountManagerStatisticsDao accountManagerStatisticsDao;
-    Map<String, AccountManagerStatistics> getAllAccountManagerStatistics(){
-        return accountManagerStatisticsDao.getAllAccountManagerStatistics();
-    }
 
-
-    JSONArray getJSONObject(String name){
+    public JSONArray getAccountStatistics(String name) {
         return accountManagerStatisticsDao.getAccountStatistics(name);
     }
 
